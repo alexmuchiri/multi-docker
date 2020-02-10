@@ -1,0 +1,24 @@
+language: generic
+
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t flasky/multi-docker -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true flasky/multi-docker npm test
+
+after_success:
+  - docker build -t flasky/multi-client ./client
+  - docker build -t flasky/multi-nginx ./nginx
+  - docker build -t flasky/multi-server ./server
+  - docker build -t flasky/multi-worker ./worker
+  #Login to docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #push the built images to docker hub
+  - docker push flasky/multi-client 
+  - docker push flasky/multi-nginx
+  - docker push flasky/multi-server
+  - docker push flasky/multi-worker
